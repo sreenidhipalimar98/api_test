@@ -1,0 +1,45 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: us-east-1
+    SECRET_NAME: naadi/dev/postgres
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+      nodejs: 18
+    commands:
+      - echo "✅ Installing Serverless Framework CLI"
+      - npm install -g serverless@3.38.0
+      - pip install -r shared_layer/requirements.txt
+
+  pre_build:
+    commands:
+      - echo "🔐 Fetching secrets from AWS Secrets Manager"
+      - |
+        secret_json=$(aws secretsmanager get-secret-value \
+          --region $AWS_REGION \
+          --secret-id $SECRET_NAME \
+          --query SecretString \
+          --output text)
+        echo $secret_json > secret.json
+        export $(cat secret.json | jq -r 'to_entries|map("\(.key)=\(.value)")|.[]')        
+      - echo "📦 Building shared layer before Serverless deploy"
+      - cd shared_layer
+      - bash build.sh
+      - cd ..
+
+  build:
+    commands:
+      - echo "🔨 No separate build step needed for Serverless Framework"
+
+  post_build:
+    commands:
+      - echo "🚀 Deploying stack via Serverless Framework"
+      - serverless deploy --stage dev --region ${AWS_REGION}
+
+artifacts:
+  files:
+    - serverless.yml

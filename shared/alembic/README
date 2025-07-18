@@ -1,0 +1,4 @@
+This is the Alembic migration environment for your project.
+- Place migration scripts in the versions/ directory.
+- Edit env.py to configure metadata and DB connection.
+- Use alembic CLI to generate and apply migrations.

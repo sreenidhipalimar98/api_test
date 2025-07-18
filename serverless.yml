@@ -1,0 +1,61 @@
+service: pipeflow
+
+frameworkVersion: '3.38.1'
+
+provider:
+  name: aws
+  runtime: python3.11
+  region: us-east-1
+  stage: dev
+  environment:
+    AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID}
+    AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY}
+    AWS_REGION: ${env:AWS_REGION}
+    AWS_S3_BUCKET: ${env:AWS_S3_BUCKET}
+    COGNITO_REGION: ${env:COGNITO_REGION}
+    COGNITO_USERPOOL_ID: ${env:COGNITO_USERPOOL_ID}
+    COGNITO_APP_CLIENT_ID: ${env:COGNITO_APP_CLIENT_ID}
+    DEV_USERNAME: ${env:DEV_USERNAME}
+    DEV_PASSWORD: ${env:DEV_PASSWORD}
+    DEV_HOST: ${env:DEV_HOST}
+    DEV_PORT: ${env:DEV_PORT}
+    DEV_DBNAME: ${env:DEV_DBNAME}
+
+layers:
+  shared:
+    path: shared_layer
+    compatibleRuntimes:
+      - python3.11
+
+functions:
+  masterdata:
+    handler: masterdata_lambda/main.handler
+    layers:
+      - { Ref: SharedLambdaLayer }
+    functionUrl:
+      authType: NONE
+
+  networkflow:
+    handler: networkflow_lambda/main.handler
+    layers:
+      - { Ref: SharedLambdaLayer }
+    functionUrl:
+      authType: NONE
+
+  tenant:
+    handler: tenant_lambda/main.handler
+    layers:
+      - { Ref: SharedLambdaLayer }
+    functionUrl:
+      authType: NONE
+
+  userrole:
+    handler: user_role_permission_lambda/main.handler
+    layers:
+      - { Ref: SharedLambdaLayer }
+    functionUrl:
+      authType: NONE
+
+plugins:
+  - serverless-python-requirements
+  - serverless-dotenv-plugin
